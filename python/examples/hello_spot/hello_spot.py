@@ -18,6 +18,7 @@ import bosdyn.geometry
 from bosdyn.client.image import ImageClient
 from bosdyn.client.robot_command import RobotCommandBuilder, RobotCommandClient, blocking_stand
 
+import numpy as np
 
 def hello_spot(config):
     """A simple example of using the Boston Dynamics API to command a Spot robot."""
@@ -59,7 +60,8 @@ def hello_spot(config):
     # control it. Note that the lease is returned as the "finally" condition in this
     # try-catch-finally block.
     lease_client = robot.ensure_client(bosdyn.client.lease.LeaseClient.default_service_name)
-    lease = lease_client.acquire()
+    # lease = lease_client.acquire()
+    lease = lease_client.take()
     try:
         with bosdyn.client.lease.LeaseKeepAlive(lease_client):
             # Now, we are ready to power on the robot. This call will block until the power
@@ -91,10 +93,17 @@ def hello_spot(config):
             # center of the feet. The X axis of the footprint frame points forward along
             # the robot's length, the Z axis points up aligned with gravity, and the Y
             # axis is the cross-product of the two.
-            footprint_R_body = bosdyn.geometry.EulerZXY(yaw=0.4, roll=0.0, pitch=0.0)
-            cmd = RobotCommandBuilder.synchro_stand_command(footprint_R_body=footprint_R_body)
-            command_client.robot_command(cmd)
-            robot.logger.info("Robot standing twisted.")
+            for i in range(100):
+              print(i)
+              yaw = 0.4 * np.sin(0.1 * i)
+              pitch = 0.2  * np.cos(0.2 * i)
+              roll = 0.1 * np.sin(0.3 * i)
+              footprint_R_body = bosdyn.geometry.EulerZXY(yaw=yaw, roll=roll, pitch=pitch)
+              cmd = RobotCommandBuilder.synchro_stand_command(footprint_R_body=footprint_R_body)
+              command_client.robot_command(cmd)
+              robot.logger.info("Robot standing twisted.")
+              time.sleep(0.1)
+
             time.sleep(3)
 
             # Now tell the robot to stand taller, using the same approach of constructing
